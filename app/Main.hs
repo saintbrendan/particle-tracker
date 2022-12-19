@@ -5,6 +5,10 @@ import Lib
 import System.Environment (getArgs)
 import System.IO (openFile, IOMode (ReadMode), hGetContents)
 import Data.List (nub)
+import GHC.Conc (numCapabilities)
+import Control.Parallel.Strategies(parMap)
+import Control.Parallel.Strategies(rdeepseq)
+import GHC.Conc(par)
 
 maxRange :: Int -> Float
 maxRange n = fromIntegral n/4.0
@@ -16,7 +20,7 @@ readCsv :: String -> [[Int]]
 readCsv csvContent = [[read word | word <- words line] | line <- lines csvContent]
 
 findHits :: [Int] -> [Int]
-findHits xs = map snd $ filter ((>0) . fst) (zip xs [0..])
+findHits xs = parMap rdeepseq snd $ filter ((>0) . fst) (zip xs [0..])
 
 getDistance :: [Int] -> Int -> Int
 getDistance [] _ = 0
@@ -50,7 +54,7 @@ putRange n x
     | otherwise = x
 
 getRange :: Int -> Int -> Int -> Int -> [Int]
-getRange x y range n = map (putRange n) [x+y-range .. x+y+range]
+getRange x y range n = parMap rdeepseq  (putRange n) [x+y-range .. x+y+range]
 
 distance :: Int -> Int -> Int -> Int
 distance fidx sidx n
@@ -73,8 +77,8 @@ alld firsthits secondhits n = concat [[[firsthit,secondhit] |
 
 calc :: [[Int]] -> Int -> String
 calc pixels n = concat [tail $ init (show line)++"\n" | line <- r]
-    where   r = getPathlist 2 (alld (findHits hp) (findHits (head tp)) n) (tail tp) n
-            (hp:tp) = pixels
+    where   r = par (findHits (htp))  (getPathlist 2 (alld (findHits hp) (findHits (htp)) n) (ttp) n)
+            (hp:htp:ttp) = pixels
 
 
 main :: IO ()
@@ -85,4 +89,5 @@ main = do
     csvContent <- hGetContents file
     let pixels = readCsv csvContent
     let n = length $ head pixels
+    -- putStrLn $ "number of cores: " ++ show numCapabilities
     putStr $ calc pixels n
