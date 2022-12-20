@@ -6,8 +6,7 @@ import System.Environment (getArgs)
 import System.IO (openFile, IOMode (ReadMode), hGetContents)
 import Data.List (nub)
 import GHC.Conc (numCapabilities)
-import Control.Parallel.Strategies(parMap)
-import Control.Parallel.Strategies(rdeepseq)
+import Control.Parallel.Strategies(parMap, parList, rdeepseq, using)
 import GHC.Conc(par)
 
 maxRange :: Int -> Float
@@ -35,14 +34,14 @@ getPathlist :: Int -> [[Int]] -> [[Int]] -> Int -> [[Int]]
 getPathlist _ [] _ _ = []
 getPathlist _ pathlist [] _ = pathlist
 getPathlist depth pathlist pixels n
-    = concat [getPathlist (depth + 1) (getPath (depth+1) path hys n) tys n | path <- pathlist, checkPath path]
+    = concat ([getPathlist (depth + 1) (getPath (depth+1) path hys n) tys n | path <- pathlist, checkPath path] `using` parList rdeepseq)
     where   (hys:tys) = pixels
 
 getPath :: Int -> [Int] -> [Int] -> Int -> [[Int]]
 getPath depth path [] _
     | length path == depth = [path]
     | otherwise = []
-getPath depth path hys n =  [path++ [hit] | hit <- hitlist (getTotaldistance depth path n) (last path) hys n]
+getPath depth path hys n =  [path++ [hit] | hit <- hitlist (getTotaldistance depth path n) (last path) hys n] `using` parList rdeepseq
 
 hitlist :: Int -> Int -> [Int] -> Int -> [Int]
 hitlist d r hys n = [y | y <- findHits hys, y `elem` getRange r d (round $ maxRange n) n]
@@ -72,8 +71,8 @@ checkPath path = length delem < 3
     where delem = nub $ diffPath path
 
 alld :: [Int] -> [Int] -> Int -> [[Int]]
-alld firsthits secondhits n = concat [[[firsthit,secondhit] |
-        firsthit <- firsthits, abs (distance firsthit secondhit n) <= round (maxDistance n)] | secondhit <- secondhits]
+alld firsthits secondhits n = concat ([[[firsthit,secondhit] |
+        firsthit <- firsthits, abs (distance firsthit secondhit n) <= round (maxDistance n)] | secondhit <- secondhits] `using` parList rdeepseq)
 
 calc :: [[Int]] -> Int -> String
 calc pixels n = concat [tail $ init (show line)++"\n" | line <- r]
