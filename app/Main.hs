@@ -19,7 +19,7 @@ readCsv :: String -> [[Int]]
 readCsv csvContent = [[read word | word <- words line] | line <- lines csvContent]
 
 findHits :: [Int] -> [Int]
-findHits xs = parMap rdeepseq snd $ filter ((>0) . fst) (zip xs [0..])
+findHits xs = map snd $ filter ((>0) . fst) (zip xs [0..])
 
 getDistance :: [Int] -> Int -> Int
 getDistance [] _ = 0
@@ -53,7 +53,7 @@ putRange n x
     | otherwise = x
 
 getRange :: Int -> Int -> Int -> Int -> [Int]
-getRange x y range n = parMap rdeepseq  (putRange n) [x+y-range .. x+y+range]
+getRange x y range n = map (putRange n) [x+y-range .. x+y+range]
 
 distance :: Int -> Int -> Int -> Int
 distance fidx sidx n
