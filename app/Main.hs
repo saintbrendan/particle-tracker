@@ -81,7 +81,7 @@ calc :: [[Int]] -> Int -> String
 calc pixels n = concat [tail $ init (show line)++"\n" | line <- filtered_tracks]
     where   tracks = par (findHits (htp))  (getPathlist 2 (alld (findHits hp) (findHits (htp)) n) (ttp) n)
             (hp:htp:ttp) = pixels
-            filtered_tracks = parFilter isValid tracks
+            filtered_tracks = parFilter (isValid n) tracks
 
 
 main :: IO ()
@@ -92,6 +92,5 @@ main = do
     csvContent <- hGetContents file
     let pixels = readCsv csvContent
     let n = length $ head pixels
-    -- putStrLn $ "number of cores: " ++ show numCapabilities
-    print $ isValid [5]
+    print $ head pixels
     putStr $ calc pixels n

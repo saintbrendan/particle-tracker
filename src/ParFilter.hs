@@ -13,9 +13,9 @@ parFilter f xs =
 chunkFilter f xs chunkSize
     | xs == [] = []
     | otherwise = let (xs1, xs2) = splitAt chunkSize xs
-                      filteredBB = runEval $ do
+                      filteredTracks = runEval $ do
                         filteredA <- (rpar (force (filter f xs1)))
                         filteredB <- (rpar (force (chunkFilter f xs2 chunkSize)))
                         _ <- rseq filteredB
                         return (filteredA:filteredB)
-                  in filteredBB
+                  in filteredTracks

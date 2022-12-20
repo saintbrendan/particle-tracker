@@ -3,6 +3,8 @@ module Lib
       isValid
     ) where
 
+import Data.Complex (mkPolar)
+
 centerRadius :: Float -> Float -> Float -> Float -> Float -> Float  -> (Float, Float, Float)
 centerRadius x1 y1 x2 y2 x3 y3 =
     let x12 = x1 - x2
@@ -31,6 +33,20 @@ centerRadius x1 y1 x2 y2 x3 y3 =
     in
        (x, y, r)
 
-isValid :: [Int] -> Bool
-isValid xs =
+isValid :: Int -> [Int] -> Bool
+isValid numPixelsInCircle xs =
     True
+
+toCartesian :: Float -> Float -> (Float, Float)
+toCartesian magnitude phase =
+    (magnitude * (cos phase), magnitude * (sin phase))
+
+toPolar :: Float -> Float -> (Float, Float)
+toPolar x y =
+    (sqrt(x*x + y*y), atan(y/x))
+
+isLinear :: Int -> [Int] -> Bool
+isLinear numPixelsInCircle xs =
+    let outerpoint = last xs
+    in all (<=1) [ (abs (delta outerpoint x))  | x<-xs]
+        where delta a b = ((a-b) + numPixelsInCircle) `mod` numPixelsInCircle
