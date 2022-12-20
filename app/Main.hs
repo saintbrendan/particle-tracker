@@ -34,14 +34,14 @@ getPathlist :: Int -> [[Int]] -> [[Int]] -> Int -> [[Int]]
 getPathlist _ [] _ _ = []
 getPathlist _ pathlist [] _ = pathlist
 getPathlist depth pathlist pixels n
-    = concat ([getPathlist (depth + 1) (getPath (depth+1) path hys n) tys n | path <- pathlist, checkPath path] `using` parList rdeepseq)
+    = concat [getPathlist (depth + 1) (getPath (depth+1) path hys n) tys n | path <- pathlist, checkPath path] `using` parList rdeepseq
     where   (hys:tys) = pixels
 
 getPath :: Int -> [Int] -> [Int] -> Int -> [[Int]]
 getPath depth path [] _
     | length path == depth = [path]
     | otherwise = []
-getPath depth path hys n =  [path++ [hit] | hit <- hitlist (getTotaldistance depth path n) (last path) hys n] `using` parList rdeepseq
+getPath depth path hys n =  [path++ [hit] | hit <- hitlist (getTotaldistance depth path n) (last path) hys n]
 
 hitlist :: Int -> Int -> [Int] -> Int -> [Int]
 hitlist d r hys n = [y | y <- findHits hys, y `elem` getRange r d (round $ maxRange n) n]
@@ -71,13 +71,14 @@ checkPath path = length delem < 3
     where delem = nub $ diffPath path
 
 alld :: [Int] -> [Int] -> Int -> [[Int]]
-alld firsthits secondhits n = concat ([[[firsthit,secondhit] |
-        firsthit <- firsthits, abs (distance firsthit secondhit n) <= round (maxDistance n)] | secondhit <- secondhits] `using` parList rdeepseq)
+alld firsthits secondhits n = concat [[[firsthit,secondhit] |
+        firsthit <- firsthits, abs (distance firsthit secondhit n) <= round (maxDistance n)] | secondhit <- secondhits]
 
 calc :: [[Int]] -> Int -> String
-calc pixels n = concat [tail $ init (show line)++"\n" | line <- r]
-    where   r = par (findHits (htp))  (getPathlist 2 (alld (findHits hp) (findHits (htp)) n) (ttp) n)
+calc pixels n = concat [tail $ init (show line)++"\n" | line <- filtered_tracks]
+    where   tracks = par (findHits (htp))  (getPathlist 2 (alld (findHits hp) (findHits (htp)) n) (ttp) n)
             (hp:htp:ttp) = pixels
+            filtered_tracks = filter isValid tracks
 
 
 main :: IO ()
@@ -89,4 +90,5 @@ main = do
     let pixels = readCsv csvContent
     let n = length $ head pixels
     -- putStrLn $ "number of cores: " ++ show numCapabilities
+    print $ isValid [5]
     putStr $ calc pixels n
