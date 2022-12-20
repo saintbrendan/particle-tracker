@@ -1,6 +1,7 @@
 module Main (main) where
 
 import Lib
+import ParFilter
 
 import System.Environment (getArgs)
 import System.IO (openFile, IOMode (ReadMode), hGetContents)
@@ -74,11 +75,13 @@ alld :: [Int] -> [Int] -> Int -> [[Int]]
 alld firsthits secondhits n = concat [[[firsthit,secondhit] |
         firsthit <- firsthits, abs (distance firsthit secondhit n) <= round (maxDistance n)] | secondhit <- secondhits]
 
+
+
 calc :: [[Int]] -> Int -> String
 calc pixels n = concat [tail $ init (show line)++"\n" | line <- filtered_tracks]
     where   tracks = par (findHits (htp))  (getPathlist 2 (alld (findHits hp) (findHits (htp)) n) (ttp) n)
             (hp:htp:ttp) = pixels
-            filtered_tracks = filter isValid tracks
+            filtered_tracks = parFilter isValid tracks
 
 
 main :: IO ()
