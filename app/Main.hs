@@ -82,6 +82,9 @@ alld firsthits secondhits n =
     ]
 
 calc :: [[Int]] -> Int -> String
+calc [] _ = ""
+calc [[]] _ = ""
+calc [(_:_)] _ = ""
 calc pixels n = concat [tail $ init (show line) ++ "\n" | line <- filtered_tracks]
   where
     tracks = par (findHits (htp)) (getPathlist 2 (alld (findHits hp) (findHits (htp)) n) (ttp) n)
