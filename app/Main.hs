@@ -98,5 +98,4 @@ main = do
   csvContent <- hGetContents file
   let pixels = readCsv csvContent
   let n = length $ head pixels
-  print $ head pixels
   putStr $ calc pixels n
