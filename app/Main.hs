@@ -16,10 +16,10 @@ maxDistance :: Int -> Float
 maxDistance n = fromIntegral n/2.0
 
 readCsv :: String -> [[Int]]
-readCsv csvContent = [[read word | word <- words line] | line <- lines csvContent] `using` parList rdeepseq
+readCsv csvContent = [[read word | word <- words line] | line <- lines csvContent]
 
 findHits :: [Int] -> [Int]
-findHits xs = map snd $ filter ((>0) . fst) (zip xs [0..])
+findHits xs = parMap rdeepseq snd $ filter ((>0) . fst) (zip xs [0..])
 
 getDistance :: [Int] -> Int -> Int
 getDistance [] _ = 0
@@ -44,7 +44,7 @@ getPath depth path [] _
 getPath depth path hys n =  [path++ [hit] | hit <- hitlist (getTotaldistance depth path n) (last path) hys n]
 
 hitlist :: Int -> Int -> [Int] -> Int -> [Int]
-hitlist d r hys n = [y | y <- findHits hys, y `elem` getRange r d (round $ maxRange n) n] `using` parList rdeepseq
+hitlist d r hys n = [y | y <- findHits hys, y `elem` getRange r d (round $ maxRange n) n]
 
 putRange :: Int -> Int -> Int
 putRange n x
@@ -80,7 +80,7 @@ calc :: [[Int]] -> Int -> String
 calc pixels n = concat [tail $ init (show line)++"\n" | line <- filtered_tracks]
     where   tracks = par (findHits (htp))  (getPathlist 2 (alld (findHits hp) (findHits (htp)) n) (ttp) n)
             (hp:htp:ttp) = pixels
-            filtered_tracks = parFilter (isValid n) tracks
+            filtered_tracks = filter (isValid n) tracks
 
 
 main :: IO ()
