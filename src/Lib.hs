@@ -59,7 +59,8 @@ toCartesian :: Float -> Float -> (Float, Float)
 toCartesian magnitude phase =
   (magnitude * (cos phase), magnitude * (sin phase))
 
--- Temporarily Commented Out
+-- Sister function to toCartesian.
+-- Not needed for 1.0, so commented out.
 -- toPolar :: Float -> Float -> (Float, Float)
 -- toPolar x y =
 --   (sqrt (x * x + y * y), atan (y / x))
@@ -79,14 +80,10 @@ isSubArch detectorNum numPixelsInCircle (t : ts) cx cy cr =
   in ((distanceFromPointToCircle x y cx cy cr) < minAccuracy) && isSubArch (detectorNum + 1) numPixelsInCircle ts cx cy cr
 
 isArc :: Int -> [Int] -> Float -> Float -> Float -> Bool
--- numPixelsInCircle is use to determine minimum accuracy for each detector
+-- numPixelsInCircle is use to determine minimum accuracy for each track
 isArc numPixelsInCircle xs cx cy cr =
   isSubArch 1 numPixelsInCircle xs cx cy cr
 
--- https://www.petercollingridge.co.uk/tutorials/computational-geometry/circle-circle-intersections/
--- https://mathworld.wolfram.com/Circle-CircleIntersection.html
--- https://mathworld.wolfram.com/Circle-CircleIntersection.html#:~:text=Two%20circles%20may%20intersect%20in,known%20as%20the%20radical%20line.
--- https://math.stackexchange.com/questions/256100/how-can-i-find-the-points-at-which-two-circles-intersect
 distanceFromPointToCircle :: Float -> Float -> Float -> Float -> Float -> Float
 distanceFromPointToCircle px py cx cy cr =
   let xDelta = px - cx
