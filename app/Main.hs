@@ -22,9 +22,10 @@ findHits xs = parMap rdeepseq snd $ filter ((> 0) . fst) (zip xs [0 ..])
 
 getDistance :: [Int] -> Int -> Int
 getDistance [] _ = 0
-getDistance (hpath : tpath) n
-  | not $ null tpath = distance hpath (head tpath) n + getDistance tpath n
+getDistance (hpath : tpath@(headtpath:_)) n
+  | not $ null tpath = distance hpath (headtpath) n + getDistance tpath n
   | otherwise = 0
+getDistance [_] _ = 0
 
 getTotaldistance :: Int -> [Int] -> Int -> Int
 getTotaldistance depth path n = round $ (fromIntegral (getDistance path n) :: Float) / (fromIntegral (depth - 1) :: Float)
@@ -84,10 +85,9 @@ alld firsthits secondhits n =
 calc :: [[Int]] -> Int -> String
 calc [] _ = ""
 calc [[]] _ = ""
-calc pixels n = concat [tail $ init (show line) ++ "\n" | line <- filtered_tracks]
+calc (hp : htp : ttp) n = concat [tail $ init (show line) ++ "\n" | line <- filtered_tracks]
   where
     tracks = par (findHits (htp)) (getPathlist 2 (alld (findHits hp) (findHits (htp)) n) (ttp) n)
-    (hp : htp : ttp) = pixels
     filtered_tracks = parFilter (isValid n) tracks
 calc [(_:_)] _ = ""
 
