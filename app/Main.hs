@@ -6,9 +6,8 @@ import ParFilter
 import System.Environment (getArgs)
 import System.IO (openFile, IOMode (ReadMode), hGetContents)
 import Data.List (nub)
-import GHC.Conc (numCapabilities)
-import Control.Parallel.Strategies(parMap, parList, rdeepseq, using)
-import GHC.Conc(par)
+import GHC.Conc (par)
+import Control.Parallel.Strategies (parMap, parList, rdeepseq, using)
 
 maxRange :: Int -> Float
 maxRange n = fromIntegral n/4.0
@@ -17,7 +16,7 @@ maxDistance :: Int -> Float
 maxDistance n = fromIntegral n/2.0
 
 readCsv :: String -> [[Int]]
-readCsv csvContent = [[read word | word <- words line] | line <- lines csvContent]
+readCsv csvContent = [[read word | word <- words line] | line <- lines csvContent] `using` parList rdeepseq
 
 findHits :: [Int] -> [Int]
 findHits xs = map snd $ filter ((>0) . fst) (zip xs [0..])
@@ -45,7 +44,7 @@ getPath depth path [] _
 getPath depth path hys n =  [path++ [hit] | hit <- hitlist (getTotaldistance depth path n) (last path) hys n]
 
 hitlist :: Int -> Int -> [Int] -> Int -> [Int]
-hitlist d r hys n = [y | y <- findHits hys, y `elem` getRange r d (round $ maxRange n) n]
+hitlist d r hys n = [y | y <- findHits hys, y `elem` getRange r d (round $ maxRange n) n] `using` parList rdeepseq
 
 putRange :: Int -> Int -> Int
 putRange n x

@@ -33,9 +33,28 @@ centerRadius x1 y1 x2 y2 x3 y3 =
     in
        (x, y, r)
 
+isValidLinearOrArcTrack :: Int -> [Int] -> Float -> Float -> Float -> Bool
+isValidLinearOrArcTrack numPixelsInCircle xs xc yc rc
+    | (isInfinite xc) || (isInfinite yc) || (isInfinite rc) = True -- linear
+    | otherwise = isArc numPixelsInCircle xs xc yc rc
+
+
+isValidTrack :: Int -> [Int] -> [Int] -> Bool
+isValidTrack numPixelsInCircle _ [] = True
+isValidTrack numPixelsInCircle ts (tmid:ttail) =
+    let phasemid = (2.0 * pi * (fromIntegral tmid)/(fromIntegral numPixelsInCircle))
+        (xmid, ymid) = toCartesian (fromIntegral (((length ts) `div` 2)+1)) phasemid
+        touter = last ttail
+        phaseouter = (2.0 * pi * (fromIntegral touter)/(fromIntegral numPixelsInCircle))
+        (xouter, youter) = toCartesian (fromIntegral (length ts)) phaseouter
+        (xc,yc,rc) = centerRadius 0.0 0.0 xmid ymid xouter youter
+    in isValidLinearOrArcTrack numPixelsInCircle ts xc yc rc
+
+
 isValid :: Int -> [Int] -> Bool
 isValid numPixelsInCircle xs =
-    True
+    let (xs1, xs2) = splitAt ((length xs) `div` 2) xs
+    in (isLinear numPixelsInCircle xs) || (isValidTrack numPixelsInCircle xs xs2)
 
 toCartesian :: Float -> Float -> (Float, Float)
 toCartesian magnitude phase =
@@ -48,5 +67,30 @@ toPolar x y =
 isLinear :: Int -> [Int] -> Bool
 isLinear numPixelsInCircle xs =
     let outerpoint = last xs
-    in all (<=1) [ (abs (delta outerpoint x))  | x<-xs]
-        where delta a b = ((a-b) + numPixelsInCircle) `mod` numPixelsInCircle
+    in all (\x -> (x <= 1) || (x == (numPixelsInCircle - 1))) [ (abs (outerpoint - x))  | x<-xs]
+
+isSubArch :: Int -> Int -> [Int] -> Float -> Float -> Float  -> Bool
+isSubArch _ _ [] _ _ _ = True
+isSubArch detectorNum numPixelsInCircle  (x:xs) cx cy cr =
+    let circumference = 2.0 * pi * (fromIntegral detectorNum) :: Float
+        minAccuracy = circumference * ((fromIntegral numPixelsInCircle)/(2.0 * pi))
+        phase = ((2.0*pi) * x / (fromIntegral numPixelsInCircle))
+        (x,y) = toCartesian (fromIntegral detectorNum) phase
+    in ((distanceFromPointToCircle x y cx cy cr) < (minAccuracy * 1000.0)) && isSubArch (detectorNum + 1) numPixelsInCircle xs cx cy cr
+
+
+isArc :: Int -> [Int] -> Float -> Float -> Float -> Bool
+-- numPixelsInCircle is use to determine minimum accuracy for each detector
+isArc numPixelsInCircle xs cx cy cr = False
+    -- isSubArch 1 numPixelsInCircle xs cx cy cr
+
+-- https://www.petercollingridge.co.uk/tutorials/computational-geometry/circle-circle-intersections/
+-- https://mathworld.wolfram.com/Circle-CircleIntersection.html
+-- https://mathworld.wolfram.com/Circle-CircleIntersection.html#:~:text=Two%20circles%20may%20intersect%20in,known%20as%20the%20radical%20line.
+-- https://math.stackexchange.com/questions/256100/how-can-i-find-the-points-at-which-two-circles-intersect
+distanceFromPointToCircle :: Float -> Float -> Float -> Float -> Float -> Float
+distanceFromPointToCircle px py cx cy cr =
+    let xDelta = px - cx
+        yDelta = py - cy
+        d = sqrt(xDelta * xDelta + yDelta * yDelta)
+    in abs $ d - cr
