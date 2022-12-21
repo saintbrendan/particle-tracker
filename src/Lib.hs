@@ -4,6 +4,9 @@ module Lib
   )
 where
 
+-- https://www.had2know.org/academics/circle-through-three-points.html#:~:text=r2%20%3D%20(x%20%2D%20h,y%2Dcoordinate%20of%20the%20center.
+-- https://math.stackexchange.com/questions/213658/get-the-equation-of-a-circle-when-given-3-points
+-- https://www.geeksforgeeks.org/equation-of-circle-when-three-points-on-the-circle-are-given/
 centerRadius :: Float -> Float -> Float -> Float -> Float -> Float -> (Float, Float, Float)
 centerRadius x1 y1 x2 y2 x3 y3 =
   let x12 = x1 - x2
@@ -33,7 +36,7 @@ centerRadius x1 y1 x2 y2 x3 y3 =
 
 isValidLinearOrArcTrack :: Int -> [Int] -> Float -> Float -> Float -> Bool
 isValidLinearOrArcTrack numPixelsInCircle xs xc yc rc
-  | (isInfinite xc) || (isInfinite yc) || (isInfinite rc) = True -- linear
+  | (isInfinite xc) || (isInfinite yc) || (isInfinite rc) = isLinear numPixelsInCircle xs
   | otherwise = isArc numPixelsInCircle xs xc yc rc
 
 isValidTrack :: Int -> [Int] -> [Int] -> Bool
@@ -67,18 +70,17 @@ isLinear numPixelsInCircle xs =
 
 isSubArch :: Int -> Int -> [Int] -> Float -> Float -> Float -> Bool
 isSubArch _ _ [] _ _ _ = True
-isSubArch detectorNum numPixelsInCircle (x : xs) cx cy cr =
+isSubArch detectorNum numPixelsInCircle (t : ts) cx cy cr =
   let circumference = 2.0 * pi * (fromIntegral detectorNum) :: Float
-      minAccuracy = circumference * ((fromIntegral numPixelsInCircle) / (2.0 * pi))
-      phase = ((2.0 * pi) * x / (fromIntegral numPixelsInCircle))
+      minAccuracy = circumference / (fromIntegral numPixelsInCircle)
+      phase = ((2.0 * pi) * (fromIntegral t) / (fromIntegral numPixelsInCircle))
       (x, y) = toCartesian (fromIntegral detectorNum) phase
-   in ((distanceFromPointToCircle x y cx cy cr) < (minAccuracy * 1000.0)) && isSubArch (detectorNum + 1) numPixelsInCircle xs cx cy cr
+  in ((distanceFromPointToCircle x y cx cy cr) < minAccuracy) && isSubArch (detectorNum + 1) numPixelsInCircle ts cx cy cr
 
 isArc :: Int -> [Int] -> Float -> Float -> Float -> Bool
 -- numPixelsInCircle is use to determine minimum accuracy for each detector
-isArc numPixelsInCircle xs cx cy cr = False
-
--- isSubArch 1 numPixelsInCircle xs cx cy cr
+isArc numPixelsInCircle xs cx cy cr =
+  isSubArch 1 numPixelsInCircle xs cx cy cr
 
 -- https://www.petercollingridge.co.uk/tutorials/computational-geometry/circle-circle-intersections/
 -- https://mathworld.wolfram.com/Circle-CircleIntersection.html
