@@ -40,28 +40,29 @@ isValidLinearOrArcTrack numPixelsInCircle xs xc yc rc
   | otherwise = isArc numPixelsInCircle xs xc yc rc
 
 isValidTrack :: Int -> [Int] -> [Int] -> Bool
-isValidTrack numPixelsInCircle _ [] = True
+isValidTrack _ _ [] = True
 isValidTrack numPixelsInCircle ts (tmid : ttail) =
   let phasemid = (2.0 * pi * (fromIntegral tmid) / (fromIntegral numPixelsInCircle))
       (xmid, ymid) = toCartesian (fromIntegral (((length ts) `div` 2) + 1)) phasemid
-      touter = last ttail
-      phaseouter = (2.0 * pi * (fromIntegral touter) / (fromIntegral numPixelsInCircle))
-      (xouter, youter) = toCartesian (fromIntegral (length ts)) phaseouter
-      (xc, yc, rc) = centerRadius 0.0 0.0 xmid ymid xouter youter
+      tOuter = last ttail
+      phaseOuter = (2.0 * pi * (fromIntegral tOuter) / (fromIntegral numPixelsInCircle))
+      (xOuter, yOuter) = toCartesian (fromIntegral (length ts)) phaseOuter
+      (xc, yc, rc) = centerRadius 0.0 0.0 xmid ymid xOuter yOuter
    in isValidLinearOrArcTrack numPixelsInCircle ts xc yc rc
 
 isValid :: Int -> [Int] -> Bool
 isValid numPixelsInCircle xs =
-  let (xs1, xs2) = splitAt ((length xs) `div` 2) xs
+  let (_, xs2) = splitAt ((length xs) `div` 2) xs
    in (isLinear numPixelsInCircle xs) || (isValidTrack numPixelsInCircle xs xs2)
 
 toCartesian :: Float -> Float -> (Float, Float)
 toCartesian magnitude phase =
   (magnitude * (cos phase), magnitude * (sin phase))
 
-toPolar :: Float -> Float -> (Float, Float)
-toPolar x y =
-  (sqrt (x * x + y * y), atan (y / x))
+-- Temporarily Commented Out
+-- toPolar :: Float -> Float -> (Float, Float)
+-- toPolar x y =
+--   (sqrt (x * x + y * y), atan (y / x))
 
 isLinear :: Int -> [Int] -> Bool
 isLinear numPixelsInCircle xs =
